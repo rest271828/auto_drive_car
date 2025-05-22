@@ -26,12 +26,13 @@ set(target
 ament_target_dependencies(${target}
   ${DEPENDS}
 )
-# target_link_libraries(${target}
-#   config_reader
-#   vehicle_info
-#   mathlibs
-#   decision_center
-# )
+
+target_link_libraries(${target}
+  config_reader
+  vehicle_info
+  mathlibs
+  decision_center
+)
 
 #安装动态库、节点和相关目录 --------------------------------------------------------------------
 install(TARGETS

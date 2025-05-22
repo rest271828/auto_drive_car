@@ -26,6 +26,7 @@ set(PLANNING_PACKAGE_NAME ${PROJECT_NAME})
 
 #包含头文件目录------------------------------------------------------------------------------
 include_directories(
+  /usr/include/eigen3
   /usr/local/include/eigen3
   src/common/config_reader
   src/common/math

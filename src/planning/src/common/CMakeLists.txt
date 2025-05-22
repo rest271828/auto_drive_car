@@ -15,6 +15,7 @@ set(MATH_DEPENDS
   "nav_msgs"
 )
 
+find_package(Eigen3 REQUIRED)
 #添加动态链接库--------------------------------------------------------------------------------
 add_library(config_reader SHARED
   ${CMAKE_CURRENT_SOURCE_DIR}/config_reader/config_reader.cpp

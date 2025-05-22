@@ -26,9 +26,13 @@ ament_target_dependencies(${target}
   ${DEPENDS}
 )
 
-# target_link_libraries(${target}
-#   ${PROJECT_NAME}
-# )
+target_link_libraries(${target}
+  config_reader
+  vehicle_info
+  decision_center
+  local_planner
+  reference_line
+)
 
 #安装动态库、节点和相关目录 --------------------------------------------------------------------
 install(TARGETS

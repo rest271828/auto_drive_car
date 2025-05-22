@@ -3,6 +3,10 @@
 
 
 #include "rclcpp/rclcpp.hpp"
+#include "config_reader.h"
+#include <Eigen/Dense>                  // eigen
+#include <OsqpEigen/OsqpEigen.h>        // osqp-eigen
+#include <cmath>
 
 namespace Planning
 {

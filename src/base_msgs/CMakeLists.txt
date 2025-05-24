@@ -29,6 +29,24 @@ find_package(geometry_msgs REQUIRED)
 find_package(visualization_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 
+#添加依赖
+rosidl_generate_interfaces(
+  ${PROJECT_NAME}
+  "srv/GlobalPathService.srv"
+  "srv/PNCMapService.srv"
+  "msg/PNCMap.msg"
+  "msg/ReferlinePoint.msg"
+  "msg/Referline.msg"
+  "msg/LocalPathPoint.msg"
+  "msg/LocalPath.msg"
+  "msg/LocalSpeedsPoint.msg"
+  "msg/LocalSpeeds.msg"
+  "msg/LocalTrajectoryPoint.msg"
+  "msg/LocalTrajectory.msg"
+  "msg/ObsInfo.msg"
+  "msg/PlotInfo.msg"
+  DEPENDENCIES std_msgs geometry_msgs visualization_msgs nav_msgs
+)
 ##关于测试——————————————————————————————————————————————————
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

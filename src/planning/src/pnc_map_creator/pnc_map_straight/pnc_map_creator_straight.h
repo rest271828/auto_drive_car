@@ -2,13 +2,15 @@
 #define PNC_MAP_CERATOR_STRAIGHT_H_
 
 #include "rclcpp/rclcpp.hpp"
+#include "pnc_map_creator_base.h"
 
 namespace Planning
 {
-    class PncMapCreatorStraight
+    class PNCMapCreatorStraight : public PNCMapCreatorBase
     {
     public:
-        PncMapCreatorStraight();
+        PNCMapCreatorStraight();
+        PNCMap create_pnc_map() override;
 
     private:
 

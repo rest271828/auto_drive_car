@@ -2,7 +2,7 @@
 
 namespace Planning
 {
-    Planning::PncMapCreatorSTurn::PncMapCreatorSTurn()
+    Planning::PNCMapCreatorSTurn::PNCMapCreatorSTurn()
     {
         RCLCPP_INFO(rclcpp::get_logger("pnc_map"), "PncMapCreatorSTurn node has been created.");
     }

@@ -11,7 +11,7 @@ namespace Planning
     {
     public:
         PNCMapCreatorSTurn() ;
-  
+        virtual PNCMap create_pnc_map() override;
 
     private:
 

@@ -38,10 +38,16 @@ namespace Planning
 
         //创建地图
         const auto pnc_map = map_creator_->create_pnc_map();
+        response->pnc_map = pnc_map;
 
-        //发布地图
+        //发布地图,planning
+        map_pub_->publish(pnc_map);
+        RCLCPP_INFO(this->get_logger(), "PNCMap has been created and published.");
 
         //发布rviz可视化
+        const auto pnc_map_markarray = map_creator_->pnc_map_markerarray();
+        map_rviz_pub_->publish(pnc_map_markarray);  //rviz显示
+        RCLCPP_INFO(this->get_logger(), "PNCMapMarkerarray has been published.");
 
     }
 

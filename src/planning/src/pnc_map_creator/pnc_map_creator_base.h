@@ -24,9 +24,9 @@ namespace Planning
     class PNCMapCreatorBase
     {
     public:
-        virtual PNCMap create_pnc_map() = 0;
-        inline PNCMap pnc_map() const { return pnc_map_; }
-        inline MarkerArray pnc_map_markerarray() const { return pnc_map_markerarray_; }
+        virtual PNCMap create_pnc_map() = 0;        //创建地图
+        inline PNCMap pnc_map() const { return pnc_map_; }      //获取地图
+        inline MarkerArray pnc_map_markerarray() const { return pnc_map_markerarray_; }     //获取地图可视化
         virtual ~PNCMapCreatorBase() {};        //
 
     private:

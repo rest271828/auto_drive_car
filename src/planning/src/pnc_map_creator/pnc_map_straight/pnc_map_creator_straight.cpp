@@ -8,6 +8,6 @@ namespace Planning
     }
     PNCMap PNCMapCreatorStraight::create_pnc_map()
     {
-        return PNCMap();
+        return pnc_map_;
     }
 } // namespace Planning

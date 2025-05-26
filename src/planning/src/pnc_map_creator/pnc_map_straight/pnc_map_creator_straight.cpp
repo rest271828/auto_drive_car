@@ -2,9 +2,12 @@
 
 namespace Planning
 {
-    PncMapCreatorStraight::PncMapCreatorStraight()
+    PNCMapCreatorStraight::PNCMapCreatorStraight()
     {
         RCLCPP_INFO(rclcpp::get_logger("pnc_map"), "PncMapCreatorStraight node has been created.");
     }
-}  // namespace Planning
-
+    PNCMap PNCMapCreatorStraight::create_pnc_map()
+    {
+        return PNCMap();
+    }
+} // namespace Planning

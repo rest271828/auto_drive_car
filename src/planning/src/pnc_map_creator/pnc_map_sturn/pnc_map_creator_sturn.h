@@ -2,14 +2,15 @@
 #define PNC_MAP_CERATOR_STURN_H_
 
 #include "rclcpp/rclcpp.hpp"
+#include "pnc_map_creator_base.h"
 
 namespace Planning
 {
 
-    class PncMapCreatorSTurn 
+    class PNCMapCreatorSTurn : public PNCMapCreatorBase
     {
     public:
-        PncMapCreatorSTurn() ;
+        PNCMapCreatorSTurn() ;
   
 
     private:

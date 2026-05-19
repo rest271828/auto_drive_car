@@ -1,0 +1,8 @@
+# 忽略构建目录
+build/
+install/
+log/
+.cache/
+
+# 忽略 IDE 配置
+.vscode/

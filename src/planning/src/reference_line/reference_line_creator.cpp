@@ -60,12 +60,23 @@ namespace Planning
         RCLCPP_INFO(rclcpp::get_logger("reference_line"),
                     "reference line created, match_point_index = %d, front_index = %d, back_index = %d, size = %ld",
                     match_point_index_, front_index_, back_index_, refer_line_.refer_line.size());
-        return Referline();
+        return refer_line_;
     }
 
     Path ReferencelineCreator::referline_to_rviz()
     {
-        return Path();
+        refer_line_rviz_.header = refer_line_.header;
+        refer_line_rviz_.poses.clear();
+    
+        PoseStamped point_tmp;
+        for(const auto &point : refer_line_.refer_line)
+        {
+            point_tmp.header = refer_line_rviz_.header;
+            point_tmp.pose = point.pose.pose;
+            refer_line_rviz_.poses.emplace_back(point_tmp);
+        }
+    
+        return refer_line_rviz_;
     }
 
 } // namespace Planning

@@ -45,11 +45,14 @@ namespace Planning
 
     private:
         bool planning_init();
+        void vehicle_spawn(const std::shared_ptr<VehicleBase> &vehicle);
+        void get_location(const std::shared_ptr<VehicleBase> &vehicle);
 
         template <typename T>
         bool connect_server(const T &client);
         bool map_request();
         bool global_path_request();
+        void planning_callback();   // 总流程回调函数
 
     public:
         inline PNCMap pnc_map() const { return pnc_map_; }
@@ -57,7 +60,7 @@ namespace Planning
 
     private:
         std::unique_ptr<ConfigReader> process_config_; // 配置
-        std::shared_ptr<VehicleBase> main_car_;        // 主车信息
+        std::shared_ptr<VehicleBase> car_;        // 主车信息
         double obs_dis_ = 0.0;
 
         std::shared_ptr<StaticTransformBroadcaster> tf_broadcaster_; // 静态tf广播器
@@ -68,6 +71,10 @@ namespace Planning
         Path global_path_;                                                // 全局路径
         rclcpp::Client<PNCMapService>::SharedPtr map_client_;             // PNCMap服务客户端
         rclcpp::Client<GlobalPathService>::SharedPtr global_path_client_; // 全局路径服务客户端
+
+        std::shared_ptr<ReferencelineCreator> refer_line_creator_; // 参考线生成器
+        rclcpp::Publisher<Path>::SharedPtr refer_line_pub_;   // 参考线发布器
+        rclcpp::TimerBase::SharedPtr timer_;                       // 参考线发布定时器
     };
 } // namespace Planning
 #endif // PLANNING_PROCESS_H_

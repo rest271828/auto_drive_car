@@ -13,6 +13,11 @@ namespace Planning
 
         // 创建车辆和障碍物
         car_ = std::make_shared<MainCar>();
+        for (int i = 0; i < 3; i++)
+        {
+            auto obs = std::make_shared<ObsCar>(i+1);
+            obses_spawn_.emplace_back(obs);
+        }
 
         // 坐标广播器
         tf_broadcaster_ = std::make_shared<StaticTransformBroadcaster>(this);
@@ -55,6 +60,10 @@ namespace Planning
     {
         // 生成车辆
         vehicle_spawn(car_);
+        for (const auto &obs : obses_spawn_)
+        {
+            vehicle_spawn(obs);
+        }
 
         // 连接地图服务器
         if (!connect_server(map_client_))
@@ -84,9 +93,9 @@ namespace Planning
     {
         TransformStamped spawn;
         spawn.header.stamp = this->now();
-        spawn.header.frame_id = process_config_->pnc_map().frame_;  // 地图坐标
-        spawn.child_frame_id = vehicle->child_frame();              // 地图坐标的子坐标设为车辆坐标
-    
+        spawn.header.frame_id = process_config_->pnc_map().frame_; // 地图坐标
+        spawn.child_frame_id = vehicle->child_frame();             // 地图坐标的子坐标设为车辆坐标
+
         spawn.transform.translation.x = vehicle->loc_point().pose.position.x;
         spawn.transform.translation.y = vehicle->loc_point().pose.position.y;
         spawn.transform.translation.z = vehicle->loc_point().pose.position.z;
@@ -94,7 +103,7 @@ namespace Planning
         spawn.transform.rotation.y = vehicle->loc_point().pose.orientation.y;
         spawn.transform.rotation.z = vehicle->loc_point().pose.orientation.z;
         spawn.transform.rotation.w = vehicle->loc_point().pose.orientation.w;
-    
+
         RCLCPP_INFO(this->get_logger(), "vehicle %s spawned, x = %.2f, y = %.2f",
                     spawn.child_frame_id.c_str(),
                     vehicle->loc_point().pose.position.x,
@@ -213,7 +222,7 @@ namespace Planning
 
         // 监听车辆定位
         get_location(car_);
-    
+
         // 参考线
         const auto refer_line = refer_line_creator_->creat_reference_line(global_path_, car_->loc_point());
         if (refer_line.refer_line.empty())
@@ -222,8 +231,8 @@ namespace Planning
             return;
         }
         const auto refer_line_rviz = refer_line_creator_->referline_to_rviz(); // 生成rviz用的参考线
-        refer_line_pub_->publish(refer_line_rviz);                               // 发布参考线
-    
+        refer_line_pub_->publish(refer_line_rviz);                             // 发布参考线
+
         // 主车和障碍物向参考线投影
 
         // 障碍物按s值排序
@@ -241,19 +250,19 @@ namespace Planning
         // 合成轨迹
 
         // 更新绘图信息
-        
+
         // 更新车辆信息
-    
+
         RCLCPP_INFO(this->get_logger(), "---------car state: loc: (%.2f, %.2f), speed: %.2f, a: %.2f, theta: %.2f, kappa: %.2f",
                     car_->loc_point().pose.position.x,
                     car_->loc_point().pose.position.y,
                     car_->speed(), car_->acceleration(),
                     car_->theta(), car_->kappa());
-    
+
         const auto end_time = this->get_clock()->now();
         const double planning_total_time = end_time.seconds() - start_time.seconds();
         RCLCPP_INFO(this->get_logger(), "planning total time: %fms", planning_total_time * 1000);
-    
+
         // 防止系统卡死
         if (planning_total_time > 1.0)
         {

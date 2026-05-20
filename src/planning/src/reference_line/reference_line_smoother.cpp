@@ -147,7 +147,7 @@ namespace Planning
 
         QPSolution = solver.getSolution();
 
-        for(int i = 0; i < n; i++)
+        for (int i = 0; i < n; i++)
         {
             refer_line.refer_line[i].pose.pose.position.x = QPSolution(i * 2);
             refer_line.refer_line[i].pose.pose.position.y = QPSolution(i * 2 + 1);

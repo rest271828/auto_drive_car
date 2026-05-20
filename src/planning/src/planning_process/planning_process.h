@@ -52,7 +52,7 @@ namespace Planning
         bool connect_server(const T &client);
         bool map_request();
         bool global_path_request();
-        void planning_callback();   // 总流程回调函数
+        void planning_callback(); // 总流程回调函数
 
     public:
         inline PNCMap pnc_map() const { return pnc_map_; }
@@ -60,7 +60,10 @@ namespace Planning
 
     private:
         std::unique_ptr<ConfigReader> process_config_; // 配置
-        std::shared_ptr<VehicleBase> car_;        // 主车信息
+        std::shared_ptr<VehicleBase> car_;             // 主车信息
+
+        std::vector<std::shared_ptr<VehicleBase>> obses_spawn_; // 所有的障碍物
+        std::vector<std::shared_ptr<VehicleBase>> obses_;       // 要考虑的障碍物
         double obs_dis_ = 0.0;
 
         std::shared_ptr<StaticTransformBroadcaster> tf_broadcaster_; // 静态tf广播器
@@ -73,7 +76,7 @@ namespace Planning
         rclcpp::Client<GlobalPathService>::SharedPtr global_path_client_; // 全局路径服务客户端
 
         std::shared_ptr<ReferencelineCreator> refer_line_creator_; // 参考线生成器
-        rclcpp::Publisher<Path>::SharedPtr refer_line_pub_;   // 参考线发布器
+        rclcpp::Publisher<Path>::SharedPtr refer_line_pub_;        // 参考线发布器
         rclcpp::TimerBase::SharedPtr timer_;                       // 参考线发布定时器
     };
 } // namespace Planning

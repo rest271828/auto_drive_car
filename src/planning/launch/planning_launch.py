@@ -15,12 +15,14 @@ def generate_launch_description():
 
     # 　主车模型位置
     car_path = os.path.join(planning_path, "urdf/main_car", "car.xacro")
+    obs_car_path = os.path.join(planning_path, "urdf/obs_car", "obs_car.xacro")
 
     # 　rviz配置文件位置
     rviz_conf_path = os.path.join(planning_path, "rviz", "planning.rviz")
 
     # xacro命令行指令, 封装成参数, 用于启动urdf文件, 注意后面要加空格
     car_para = ParameterValue(Command(["xacro ", car_path]))
+    obs_car_para = ParameterValue(Command(["xacro ", obs_car_path]))
 
     # 启动robot_state_publisher节点, 以参数的方式加载urdf文件内容
     car_state_pub = Node(
@@ -31,11 +33,25 @@ def generate_launch_description():
         parameters=[{"robot_description": car_para}],
     )
 
+    obs_car_state_pub = Node(
+        package="robot_state_publisher",
+        executable="robot_state_publisher",
+        name="obs_car_state_pub",
+        output="screen",
+        parameters=[{"robot_description": obs_car_para}],
+    )
+
     # 启动joint_state_publisher节点
     car_joint_state_pub = Node(
         package="joint_state_publisher",
         executable="joint_state_publisher",
         name="car_joint_state_pub",
+    )
+
+    obs_car_joint_state_pub = Node(
+        package="joint_state_publisher",
+        executable="joint_state_publisher",
+        name="obs_car_joint_state_pub",
     )
 
     # 手动控制关节运动的带gui界面的节点
@@ -84,6 +100,15 @@ def generate_launch_description():
         ]
     )
 
+    # 节点分组
+    obs_car = GroupAction(
+        actions=[
+            PushRosNamespace("obs_car"),
+            obs_car_state_pub,
+            obs_car_joint_state_pub,
+        ]
+    )
+
     planning = GroupAction(
         actions=[
             PushRosNamespace("planning"),
@@ -96,6 +121,7 @@ def generate_launch_description():
     return LaunchDescription(
         [
             car_main,
+            obs_car,
             rviz2,
             planning,
         ]

@@ -4,6 +4,7 @@ from launch_ros.parameter_descriptions import ParameterValue
 from launch.substitutions import Command
 from launch.actions import GroupAction, DeclareLaunchArgument, SetEnvironmentVariable
 from launch.substitutions import LaunchConfiguration
+from launch.conditions import IfCondition
 from launch_ros.actions import PushRosNamespace
 from ament_index_python.packages import get_package_share_directory
 import os
@@ -22,6 +23,9 @@ def generate_launch_description():
         description="config file name under share/planning/config",
     )
     set_config_env = SetEnvironmentVariable("PLANNING_CONFIG", LaunchConfiguration("config"))
+
+    # 是否启动RViz(自动化测试时可以 rviz:=false)
+    rviz_arg = DeclareLaunchArgument("rviz", default_value="true", description="start rviz2")
 
     # 　主车模型位置(障碍物由 obs_move_cmd 以Marker显示, 尺寸取自配置文件)
     car_path = os.path.join(planning_path, "urdf/main_car", "car.xacro")
@@ -60,6 +64,7 @@ def generate_launch_description():
         package="rviz2",
         executable="rviz2",
         arguments=["-d", rviz_conf_path],
+        condition=IfCondition(LaunchConfiguration("rviz")),
     )
 
     # 启动绘图节点
@@ -122,6 +127,7 @@ def generate_launch_description():
     return LaunchDescription(
         [
             config_arg,
+            rviz_arg,
             set_config_env,
             car_main,
             rviz2,

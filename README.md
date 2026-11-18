@@ -198,6 +198,15 @@ ros2 run planning car_move_cmd --ros-args -r __ns:=/planning
 ros2 run planning obs_move_cmd --ros-args -r __ns:=/planning
 ```
 
+## 一键测试（ROS 2 Humble 机器上）
+
+```bash
+bash tools/ros_test/run_all.sh            # 环境检查 → colcon build → 离线仿真 → 三个场景各跑 40s 闭环
+RVIZ=true bash tools/ros_test/run_all.sh  # 同时打开 RViz 看过程
+```
+
+结果汇总在 `test_logs/<时间>/summary.txt`：编译是否通过、规划频率、行驶距离、碰撞次数、最小车身间距、决策统计和节点报错。
+
 ## 闭环规划算法说明
 
 **单位**：配置文件里的速度单位是 **m/帧**（规划周期 0.1s），代码内部统一换算成 m/s（`kPlanningCycle`），例如 `speed_limit: 1.0` 即 10 m/s。

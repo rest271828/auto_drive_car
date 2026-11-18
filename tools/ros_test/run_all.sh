@@ -3,7 +3,7 @@
 # 用法(在仓库根目录): bash tools/ros_test/run_all.sh
 #   可选环境变量: RVIZ=true 打开RViz看过程; DURATION=40 每个场景测试秒数; SKIP_BUILD=1 跳过编译
 # 结果汇总在 test_logs/<时间>/summary.txt, 把它整个贴回来即可
-set -uo pipefail
+set -o pipefail  # 不用 -u: ROS 的 setup.bash 里有未定义变量
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT"

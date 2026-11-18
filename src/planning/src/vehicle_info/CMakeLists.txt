@@ -12,6 +12,7 @@ set(DEPENDS
 
 # 添加动态库
 add_library(vehicle_info SHARED 
+  ${CMAKE_CURRENT_SOURCE_DIR}/vehicle_info_base.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/main_car/main_car_info.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/obs_car/obs_car_info.cpp
 )

@@ -15,7 +15,7 @@ namespace Planning
         length_ = vehicle_config_->main_car().length_;
         width_ = vehicle_config_->main_car().width_;
         theta_ = vehicle_config_->main_car().pose_theta_;
-        speed_ = vehicle_config_->main_car().speed_ori_;
+        speed_ = vehicle_config_->main_car().speed_ori_ / kPlanningCycle; // m/帧 -> m/s
         id_ = 0;
 
         // 初始化定位点

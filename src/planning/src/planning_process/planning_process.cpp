@@ -11,16 +11,13 @@ namespace Planning
         process_config_->read_planning_process_config();
         obs_dis_ = process_config_->process().obs_dis_;
 
-        // 创建车辆和障碍物
+        // 创建车辆和障碍物(它们的位姿由 car_move_cmd / obs_move_cmd 以tf的形式发布)
         car_ = std::make_shared<MainCar>();
         for (int i = 0; i < 3; i++)
         {
             auto obs = std::make_shared<ObsCar>(i+1);
             obses_spawn_.emplace_back(obs);
         }
-
-        // 坐标广播器
-        tf_broadcaster_ = std::make_shared<StaticTransformBroadcaster>(this);
 
         // 创建监听器，绑定主车缓存对象
         buffer_ = std::make_unique<Buffer>(this->get_clock());
@@ -33,6 +30,17 @@ namespace Planning
         // 创建参考线和参考线的发布器
         refer_line_creator_ = std::make_shared<ReferencelineCreator>();
         refer_line_pub_ = this->create_publisher<Path>("reference_line", 10);
+
+        // 决策、局部路径、速度、轨迹
+        decision_ = std::make_shared<DecisionCenter>();
+        local_path_planner_ = std::make_shared<LocalPathPlanner>();
+        local_speeds_planner_ = std::make_shared<LocalSpeedsPlanner>();
+        trajectory_combiner_ = std::make_shared<LocalTrajectoryCombiner>();
+
+        local_path_pub_ = this->create_publisher<Path>("local_path", 10);
+        local_trajectory_rviz_pub_ = this->create_publisher<Path>("local_trajectory_rviz", 10);
+        local_trajectory_pub_ = this->create_publisher<LocalTrajectory>("local_trajectory", 10);
+        plot_info_pub_ = this->create_publisher<PlotInfo>("plot_info", 10);
     }
 
     bool PlanningProcess::process() // 总流程
@@ -58,13 +66,6 @@ namespace Planning
 
     bool PlanningProcess::planning_init() // 流程初始化
     {
-        // 生成车辆
-        vehicle_spawn(car_);
-        for (const auto &obs : obses_spawn_)
-        {
-            vehicle_spawn(obs);
-        }
-
         // 连接地图服务器
         if (!connect_server(map_client_))
         {
@@ -89,29 +90,7 @@ namespace Planning
         return true;
     }
 
-    void PlanningProcess::vehicle_spawn(const std::shared_ptr<VehicleBase> &vehicle)
-    {
-        TransformStamped spawn;
-        spawn.header.stamp = this->now();
-        spawn.header.frame_id = process_config_->pnc_map().frame_; // 地图坐标
-        spawn.child_frame_id = vehicle->child_frame();             // 地图坐标的子坐标设为车辆坐标
-
-        spawn.transform.translation.x = vehicle->loc_point().pose.position.x;
-        spawn.transform.translation.y = vehicle->loc_point().pose.position.y;
-        spawn.transform.translation.z = vehicle->loc_point().pose.position.z;
-        spawn.transform.rotation.x = vehicle->loc_point().pose.orientation.x;
-        spawn.transform.rotation.y = vehicle->loc_point().pose.orientation.y;
-        spawn.transform.rotation.z = vehicle->loc_point().pose.orientation.z;
-        spawn.transform.rotation.w = vehicle->loc_point().pose.orientation.w;
-
-        RCLCPP_INFO(this->get_logger(), "vehicle %s spawned, x = %.2f, y = %.2f",
-                    spawn.child_frame_id.c_str(),
-                    vehicle->loc_point().pose.position.x,
-                    vehicle->loc_point().pose.position.y);
-        tf_broadcaster_->sendTransform(spawn);
-    }
-
-    void PlanningProcess::get_location(const std::shared_ptr<VehicleBase> &vehicle)
+    bool PlanningProcess::get_location(const std::shared_ptr<VehicleBase> &vehicle)
     {
         try
         {
@@ -126,11 +105,26 @@ namespace Planning
             point.pose.orientation.z = ts.transform.rotation.z;
             point.pose.orientation.w = ts.transform.rotation.w;
             vehicle->update_location(point);
+            return true;
         }
-        catch (const tf2::LookupException &e)
+        catch (const tf2::TransformException &e)
         {
-            RCLCPP_ERROR(this->get_logger(), "Lookup exception: %s", e.what());
+            RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), 2000,
+                                 "Lookup %s failed: %s", vehicle->child_frame().c_str(), e.what());
+            return false;
         }
+    }
+
+    void PlanningProcess::update_car_motion()
+    {
+        if (!has_trajectory_)
+        {
+            return; // 第一帧沿用配置中的初速度
+        }
+        const double t = (this->now() - last_trajectory_time_).seconds();
+        const auto p = LocalTrajectoryCombiner::interpolate_by_time(last_trajectory_, t);
+        car_->update_motion(p.speed_point.speed, p.speed_point.acceleration,
+                            p.path_point.kappa, p.path_point.dkappa);
     }
 
     template <typename T>
@@ -192,7 +186,7 @@ namespace Planning
 
     bool PlanningProcess::global_path_request()
     {
-        RCLCPP_INFO(this->get_logger(), "Sending map request");
+        RCLCPP_INFO(this->get_logger(), "Sending global path request");
 
         // 构造请求
         auto request = std::make_shared<GlobalPathService::Request>();
@@ -221,7 +215,27 @@ namespace Planning
         const auto start_time = this->get_clock()->now();
 
         // 监听车辆定位
-        get_location(car_);
+        if (!get_location(car_))
+        {
+            return; // 主车tf还没发布(car_move_cmd未启动)
+        }
+        update_car_motion();
+
+        // 障碍物定位, 只保留一定范围内的
+        obses_.clear();
+        for (const auto &obs : obses_spawn_)
+        {
+            if (!get_location(obs))
+            {
+                continue;
+            }
+            const double dis = std::hypot(obs->loc_point().pose.position.x - car_->loc_point().pose.position.x,
+                                          obs->loc_point().pose.position.y - car_->loc_point().pose.position.y);
+            if (dis <= obs_dis_)
+            {
+                obses_.emplace_back(obs);
+            }
+        }
 
         // 参考线
         const auto refer_line = refer_line_creator_->creat_reference_line(global_path_, car_->loc_point());
@@ -234,28 +248,70 @@ namespace Planning
         refer_line_pub_->publish(refer_line_rviz);                             // 发布参考线
 
         // 主车和障碍物向参考线投影
+        car_->vehicle_cartesian_to_frenet(refer_line);
+        std::vector<std::shared_ptr<VehicleBase>> obses_on_refer;
+        for (const auto &obs : obses_)
+        {
+            if (obs->vehicle_cartesian_to_frenet(refer_line))
+            {
+                obses_on_refer.emplace_back(obs); // 只有投影落在参考线范围内的才参与路径决策
+            }
+        }
 
         // 障碍物按s值排序
+        std::sort(obses_on_refer.begin(), obses_on_refer.end(),
+                  [](const std::shared_ptr<VehicleBase> &a, const std::shared_ptr<VehicleBase> &b)
+                  { return a->s() < b->s(); });
 
         // 路径决策
+        decision_->make_path_decision(car_, obses_on_refer);
 
         // 路径规划
+        const auto local_path = local_path_planner_->create_local_path(refer_line, car_, decision_);
+        if (local_path.local_path.size() < 2)
+        {
+            RCLCPP_WARN(this->get_logger(), "local path empty!");
+            return;
+        }
+        local_path_pub_->publish(local_path_planner_->path_to_rviz());
+        const auto path_s = Curve::path_arc_length(local_path);
 
         // 障碍物向路径投影
+        for (const auto &obs : obses_)
+        {
+            obs->vehicle_cartesian_to_frenet_2path(local_path, path_s);
+        }
 
         // 速度决策
+        decision_->make_speed_decision(local_path, path_s, car_, obses_,
+                                       local_speeds_planner_->dt(), local_speeds_planner_->speed_size());
 
         // 速度规划
+        const auto local_speeds = local_speeds_planner_->create_local_speeds(local_path, path_s, car_, decision_);
 
         // 合成轨迹
+        auto trajectory = trajectory_combiner_->combine_trajectory(local_path, path_s, local_speeds);
+        const auto plan_time = this->now();
+        trajectory.header.stamp = plan_time;
+        local_trajectory_pub_->publish(trajectory);
+        local_trajectory_rviz_pub_->publish(trajectory_combiner_->trajectory_to_rviz());
 
         // 更新绘图信息
+        PlotInfo plot_info;
+        plot_info.header = trajectory.header;
+        plot_info.trajectory_info = trajectory;
+        plot_info.obs_info = decision_->obs_info();
+        plot_info_pub_->publish(plot_info);
 
-        // 更新车辆信息
+        // 更新车辆信息: 记录本帧轨迹, 下一帧据此更新主车速度等状态
+        last_trajectory_ = trajectory;
+        last_trajectory_time_ = plan_time;
+        has_trajectory_ = !trajectory.local_trajectory.empty();
 
-        RCLCPP_INFO(this->get_logger(), "---------car state: loc: (%.2f, %.2f), speed: %.2f, a: %.2f, theta: %.2f, kappa: %.2f",
+        RCLCPP_INFO(this->get_logger(), "---------car state: loc: (%.2f, %.2f), s: %.2f, l: %.2f, speed: %.2f, a: %.2f, theta: %.2f, kappa: %.2f",
                     car_->loc_point().pose.position.x,
                     car_->loc_point().pose.position.y,
+                    car_->s(), car_->l(),
                     car_->speed(), car_->acceleration(),
                     car_->theta(), car_->kappa());
 

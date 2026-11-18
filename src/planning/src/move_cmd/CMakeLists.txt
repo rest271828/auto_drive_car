@@ -7,6 +7,8 @@ set(DEPENDS
   "tf2_ros"
   "tf2"
   "geometry_msgs"
+  "nav_msgs"
+  "visualization_msgs"
   "base_msgs"
 )
 
@@ -33,6 +35,7 @@ foreach(target ${MOVE_TARGETS})
   target_link_libraries(${target} 
     config_reader  
     vehicle_info
+    local_planner
   )
 endforeach()
 

@@ -15,7 +15,7 @@ namespace Planning
         length_ = vehicle_config_->obs_pair()[id].length_;
         width_ = vehicle_config_->obs_pair()[id].width_;
         theta_ = vehicle_config_->obs_pair()[id].pose_theta_;
-        speed_ = vehicle_config_->obs_pair()[id].speed_ori_;
+        speed_ = vehicle_config_->obs_pair()[id].speed_ori_ / kPlanningCycle; // m/帧 -> m/s
         id_ = id;
 
         // 初始化定位点

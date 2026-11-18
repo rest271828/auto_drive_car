@@ -8,8 +8,6 @@ Panels:
         - /Status1
         - /MainCar1
         - /ObsCar1
-        - /ObsCar1/Mass Properties1
-        - /ObsCar1/Description Topic1
         - /ReferenceLine1
       Splitter Ratio: 0.5
     Tree Height: 1239
@@ -129,63 +127,18 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
-    - Alpha: 1
-      Class: rviz_default_plugins/RobotModel
-      Collision Enabled: false
-      Description File: ""
-      Description Source: Topic
-      Description Topic:
+    - Class: rviz_default_plugins/MarkerArray
+      Enabled: true
+      Name: ObsCar
+      Namespaces:
+        obs_car: true
+      Topic:
         Depth: 5
         Durability Policy: Volatile
         History Policy: Keep Last
         Reliability Policy: Reliable
-        Value: /obs_car/robot_description
-      Enabled: true
-      Links:
-        All Links Enabled: true
-        Expand Joint Details: false
-        Expand Link Details: false
-        Expand Tree: false
-        Link Tree Style: Links in Alphabetic Order
-        base_footprint_obs1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        base_footprint_obs2:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        base_footprint_obs3:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        base_link_obs1:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        base_link_obs2:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        base_link_obs3:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        map:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-      Mass Properties:
-        Inertia: false
-        Mass: false
-      Name: ObsCar
-      TF Prefix: ""
-      Update Interval: 0
+        Value: /planning/obs_markers
       Value: true
-      Visual Enabled: true
     - Class: rviz_default_plugins/TF
       Enabled: true
       Frame Timeout: 15
@@ -318,6 +271,62 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: /planning/reference_line
+      Value: true
+    - Alpha: 1
+      Buffer Length: 1
+      Class: rviz_default_plugins/Path
+      Color: 0; 170; 255
+      Enabled: true
+      Head Diameter: 0.30000001192092896
+      Head Length: 0.20000000298023224
+      Length: 0.30000001192092896
+      Line Style: Billboards
+      Line Width: 0.30000001192092896
+      Name: LocalPath
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0.05000000074505806
+      Pose Color: 255; 85; 255
+      Pose Style: None
+      Radius: 0.029999999329447746
+      Shaft Diameter: 0.10000000149011612
+      Shaft Length: 0.10000000149011612
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /planning/local_path
+      Value: true
+    - Alpha: 1
+      Buffer Length: 1
+      Class: rviz_default_plugins/Path
+      Color: 255; 170; 0
+      Enabled: true
+      Head Diameter: 0.30000001192092896
+      Head Length: 0.20000000298023224
+      Length: 0.30000001192092896
+      Line Style: Billboards
+      Line Width: 0.15000000596046448
+      Name: LocalTrajectory
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0.05000000074505806
+      Pose Color: 255; 85; 255
+      Pose Style: None
+      Radius: 0.029999999329447746
+      Shaft Diameter: 0.10000000149011612
+      Shaft Length: 0.10000000149011612
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        Filter size: 10
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /planning/local_trajectory_rviz
       Value: true
   Enabled: true
   Global Options:

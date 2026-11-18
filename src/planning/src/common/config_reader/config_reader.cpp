@@ -1,4 +1,5 @@
 #include "config_reader.h"
+#include <cstdlib>
 
 namespace Planning
 {
@@ -7,8 +8,13 @@ namespace Planning
         // 获取workspace/install/planning/share/planning/目录路径
         std::string planning_share_directory = ament_index_cpp::get_package_share_directory("planning");
 
-        // 然后获取配置文件
-        planning_config = YAML::LoadFile(planning_share_directory + "/config/planning_static_obs_config.yaml");
+        // 然后获取配置文件: 默认静态障碍物场景, 可用环境变量 PLANNING_CONFIG 切换(launch 参数 config 会设置它)
+        std::string config_name = "planning_static_obs_config.yaml";
+        if (const char *env = std::getenv("PLANNING_CONFIG"); env != nullptr && std::string(env).size() > 0)
+        {
+            config_name = env;
+        }
+        planning_config = YAML::LoadFile(planning_share_directory + "/config/" + config_name);
     }
 
     /************vehicle*************/

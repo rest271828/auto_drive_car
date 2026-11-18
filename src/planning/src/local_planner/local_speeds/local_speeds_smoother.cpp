@@ -7,4 +7,9 @@ namespace Planning
         RCLCPP_INFO(rclcpp::get_logger("local_speed"), "local_speeds_smoother created");
     }
 
+    void LocalSpeedsSmoother::smooth_local_speeds(LocalSpeeds &local_speeds)
+    {
+        (void)local_speeds; // TODO: 基于ST约束的QP速度平滑
+    }
+
 } // namespace Planning

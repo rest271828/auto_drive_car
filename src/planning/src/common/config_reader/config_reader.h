@@ -8,6 +8,9 @@
 
 namespace Planning
 {
+    // 规划周期(s)。配置文件中的速度单位是 m/帧, 即每个规划周期走的距离, 代码内部统一换算成 m/s
+    constexpr double kPlanningCycle = 0.1;
+
     struct VehicleStruct // 车辆
     {
         int id_ = 0;              // 序号

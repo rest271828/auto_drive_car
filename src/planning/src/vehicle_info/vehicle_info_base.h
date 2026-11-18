@@ -3,6 +3,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "base_msgs/msg/referline.hpp"
+#include "base_msgs/msg/local_path.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "nav_msgs/msg/path.hpp"
@@ -13,6 +14,7 @@
 
 namespace Planning
 {
+    using base_msgs::msg::LocalPath;
     using base_msgs::msg::Referline;
     using geometry_msgs::msg::PoseStamped;
     using geometry_msgs::msg::TransformStamped;
@@ -22,9 +24,28 @@ namespace Planning
     {
     public:
         // 更新参数
-        inline void update_location(const PoseStamped &loc) {loc_point_ = loc;}
+        inline void update_location(const PoseStamped &loc)
+        {
+            loc_point_ = loc;
+            theta_ = Curve::yaw_from_pose(loc); // 航向角跟随定位
+        }
+        inline void update_motion(const double &speed, const double &acceleration,
+                                  const double &kappa, const double &dkappa)
+        {
+            speed_ = speed;
+            acceleration_ = acceleration;
+            kappa_ = kappa;
+            dkappa_ = dkappa;
+        }
 
-        // 定位点转frenet
+        // 定位点向参考线投影, 计算frenet参数; 投影点超出参考线范围时返回false
+        bool vehicle_cartesian_to_frenet(const Referline &refer_line);
+
+        // 定位点向局部路径投影, 计算 s_2path / l_2path; 投影点超出路径范围时返回false
+        bool vehicle_cartesian_to_frenet_2path(const LocalPath &path, const std::vector<double> &path_s);
+
+        // 速度在路径方向的分量(用于速度规划), 需先调用 vehicle_cartesian_to_frenet_2path
+        inline double ds_dt_2path() const { return ds_dt_2path_; }
 
         // 基本属性
         inline std::string child_frame() const { return child_frame_; }
@@ -42,10 +63,38 @@ namespace Planning
         inline double dacceleration() const { return dacceleration_; }
 
         // 向参考线投影的frenet参数
+        inline double s() const { return s_; }
+        inline double ds_dt() const { return ds_dt_; }
+        inline double dds_dt() const { return dds_dt_; }
+        inline double l() const { return l_; }
+        inline double dl_ds() const { return dl_ds_; }
+        inline double dl_dt() const { return dl_dt_; }
+        inline double ddl_ds() const { return ddl_ds_; }
+        inline double ddl_dt() const { return ddl_dt_; }
+        inline double heading_to_refer() const { return heading_to_refer_; } // 车辆航向与参考线方向的夹角
+
+        // 考虑航向夹角后, 车身在参考线横向/纵向上的半宽/半长(斜着停的车占用更宽)
+        inline double half_extent_l() const
+        {
+            return std::fabs(length_ / 2.0 * std::sin(heading_to_refer_)) + std::fabs(width_ / 2.0 * std::cos(heading_to_refer_));
+        }
+        inline double half_extent_s() const
+        {
+            return std::fabs(length_ / 2.0 * std::cos(heading_to_refer_)) + std::fabs(width_ / 2.0 * std::sin(heading_to_refer_));
+        }
 
         // 向路径投影的frenet参数
+        inline double s_2path() const { return s_2path_; }
+        inline double l_2path() const { return l_2path_; }
 
-        // 时间参数
+        // 时间参数(障碍物进入/离开路径的时间, 由速度决策写入)
+        inline double t_in() const { return t_in_; }
+        inline double t_out() const { return t_out_; }
+        inline void set_time_param(const double &t_in, const double &t_out)
+        {
+            t_in_ = t_in;
+            t_out_ = t_out;
+        }
 
     protected:
         std::unique_ptr<ConfigReader> vehicle_config_; // 配置
@@ -64,11 +113,24 @@ namespace Planning
         double dacceleration_ = 0.0; // 加加速度
 
         // 向参考线投影的frenet参数
+        double s_ = 0.0;
+        double ds_dt_ = 0.0;
+        double dds_dt_ = 0.0;
+        double l_ = 0.0;
+        double dl_ds_ = 0.0;
+        double dl_dt_ = 0.0;
+        double ddl_ds_ = 0.0;
+        double ddl_dt_ = 0.0;
+        double heading_to_refer_ = 0.0;
 
         // 向路径投影的frenet参数
+        double s_2path_ = 0.0;
+        double l_2path_ = 0.0;
+        double ds_dt_2path_ = 0.0;
 
         // 时间参数
-
+        double t_in_ = -1.0;
+        double t_out_ = -1.0;
     };
 } // namespace Planning
 #endif // VEHICLE_BASE_H_

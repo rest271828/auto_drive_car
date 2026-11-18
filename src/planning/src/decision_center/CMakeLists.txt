@@ -4,6 +4,9 @@ project(decision_center)
 # 设置依赖
 set(DEPENDS 
   "rclcpp"
+  "geometry_msgs"
+  "nav_msgs"
+  "base_msgs"
 )
 
 # 添加动态库
@@ -22,6 +25,7 @@ ament_target_dependencies(${target}
 
 target_link_libraries(${target}
   config_reader  
+  mathlibs
   vehicle_info
 )
 

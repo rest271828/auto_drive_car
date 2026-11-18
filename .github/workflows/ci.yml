@@ -1,0 +1,34 @@
+
+name: PNC Offline CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  offline-test:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build simulation
+        run: bash tools/offline_sim/build.sh
+
+      - name: Test three scenarios
+        shell: bash
+        run: |
+          set -euo pipefail
+          export SIM_SHARE_DIR="$GITHUB_WORKSPACE/src/planning"
+
+          for config in \
+            planning_static_obs_config.yaml \
+            planning_onlane_obs_config.yaml \
+            planning_dynamic_obs_config.yaml
+          do
+            echo "Testing $config"
+            ./tools/offline_sim/offline_sim "$config" | tee result.log
+            grep -q "collisions=0" result.log
+          done

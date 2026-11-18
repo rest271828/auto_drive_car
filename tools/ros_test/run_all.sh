@@ -24,6 +24,12 @@ say "git: $(git rev-parse --abbrev-ref HEAD) $(git rev-parse --short HEAD) $(git
 say ""
 say "== 1. environment =="
 say "os: $(lsb_release -ds 2>/dev/null || uname -a)"
+# conda 环境会让 colcon/CMake 用到 conda 的 python(没有 catkin_pkg 等 ROS 依赖)
+if [ -n "${CONDA_PREFIX:-}" ]; then
+  say "FAIL: conda env '${CONDA_DEFAULT_ENV:-?}' is active ($CONDA_PREFIX)."
+  say "      run: conda deactivate; rm -rf build install log; bash tools/ros_test/run_all.sh"
+  exit 1
+fi
 if [ -f /opt/ros/humble/setup.bash ]; then
   # shellcheck disable=SC1091
   source /opt/ros/humble/setup.bash
